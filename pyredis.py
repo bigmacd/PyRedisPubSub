@@ -38,11 +38,13 @@ class RedisClient(threading.Thread):
             Ignore subscribe and unsubscribe nessages.  Look for the
             published message to say exit (END_STRING)
         """
+        # item['type'] contains a string
+        # item['channel'] contains bytes
+        # item['data'] contains bytes
         for item in self.pubsub.listen():
-            if str(item['type'], 'utf-8') in ("subscribe", "unsubscribe"):
+            if item['type'] in ("subscribe", "unsubscribe"):
                 continue
             if str(item['data'], 'utf-8') in (END_STRING,):
-                print("AW DONE")
                 self.pubsub.unsubscribe()
                 break
             self.outputMessage(str(item['channel'], 'utf-8'), str(item['data'], 'utf-8'))
