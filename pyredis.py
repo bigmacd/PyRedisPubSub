@@ -10,9 +10,10 @@ END_STRING = "finish"
 # to which it is subscribed
 class RedisClient(threading.Thread):
     """ Creates the Redis Client and subscribes to the initial channel """
-    def __init__(self, channels):
+    def __init__(self, channels, redisServer):
         threading.Thread.__init__(self)
-        self.redis = redis.Redis(host="localhost", port=6379)
+        self.redisServer = redisServer
+        self.redis = redis.Redis(host=self.redisServer, port=6379)
         self.pubsub = self.redis.pubsub()
         self.channels = channels
         self.pubsub.subscribe(self.channels)
@@ -55,14 +56,15 @@ if __name__ == "__main__":
     # Accept a command line parameter as the channel to which to subscribe
     parser = argparse.ArgumentParser()
     parser.add_argument("--sub", help="channel to subscribe...to")
+    parser.add_argument("--host", help="host running the redis server")
     args = parser.parse_args()
-    
+
     # if no command line parameter was specified, default to 'test'
     subscription = args.sub if args.sub is not None else "test"
-    
+    redisServer = args.host if args.host is not None else "localhost"
     # be a client so we can publish messages, specifically END_STRING
-    r = redis.Redis(host="localhost", port=6379)
-    client = RedisClient([subscription])
+    r = redis.Redis(host=redisServer, port=6379)
+    client = RedisClient([subscription], redisServer)
     client.start()
 
     # remember to which channel was last subscribed, so we can publish our
