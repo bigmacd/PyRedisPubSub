@@ -8,7 +8,7 @@ END_STRING = "finish"
 
 # This class runs as a thread and displays message published to the channel
 # to which it is subscribed
-class RedisClient(threading.Thread):
+class MyRedisClient(threading.Thread):
     """ Creates the Redis Client and subscribes to the initial channel """
     def __init__(self, channels, redisServer):
         threading.Thread.__init__(self)
@@ -60,26 +60,33 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # if no command line parameter was specified, default to 'test'
-    subscription = args.sub if args.sub is not None else "test"
+    subscription = args.sub if args.sub is not None else "*"
     redisServer = args.host if args.host is not None else "localhost"
+   
     # be a client so we can publish messages, specifically END_STRING
     r = redis.Redis(host=redisServer, port=6379)
-    client = RedisClient([subscription], redisServer)
+    client = MyRedisClient([subscription,], redisServer)
     client.start()
 
     # remember to which channel was last subscribed, so we can publish our
     # END_STRING message
     lastSubscription = subscription
     while True:
-        subscription = input("change subscription ('{0}' to quit): ".format(END_STRING))
-        # got something from the terminal, it is supposed to be a channel 
+        # got something from the terminal, it can be a channel, or a publish,
         # or the keyword equal to END_STRING ('finish')
-        if subscription != END_STRING:
-            lastSubscription = subscription
-            print("changing subscription to {0}".format(subscription))
-        else:
-            print("exiting now...")
-            r.publish(lastSubscription, END_STRING)
-            break
+        command = input("enter 'publish' or a channel ('{0}' to quit): ".format(END_STRING))
+        if len.command > 0:
+            if command == "publish":
+                channel = input("enter the channel: ")
+                message = input("enter the message: ")
+                r.publish(channel, message)
+                continue
+            elif command != END_STRING:
+                lastSubscription = command
+                print("changing subscription to {0}".format(command))
+            else:
+                print("exiting now...")
+                r.publish(lastSubscription, END_STRING)
+                break
 
-        client.subscribe(subscription)
+            client.subscribe(subscription)
